@@ -1,94 +1,87 @@
-# Resume ATS Analyzer
+# 🐞 AI Code Reviewer & Bug Detector
 
-A beginner-friendly Streamlit app that accepts PDF, DOCX, and TXT resumes, extracts text, and uses Google's Gemini Flash model to provide an estimated ATS-readiness score and actionable resume improvements. An additional transparent checklist score is calculated locally.
-
-> **Important:** No third-party app can know the exact score a particular employer's ATS will assign. The scores here are estimates, not hiring guarantees.
+A Streamlit app that reviews your code with **Google Gemini Flash**, detects bugs, explains them, and returns a fixed version.
 
 ## Features
 
-- Upload PDF, DOCX, or TXT (maximum 5 MB)
-- Optional job description matching
-- Gemini feedback: strengths, prioritized improvements, keyword suggestions, formatting tips, and example bullet rewrites
-- Simple local checklist score for a second perspective
-- Download results as JSON
-- No database or permanent resume storage in this starter app
+- 🐛 **Bug detection** – bugs, logic errors, security flaws, performance and style problems, each with severity, category and line number.
+- ✅ **Auto-debugging** – a complete corrected version of your code with a plain-English list of what changed.
+- 🔀 **Diff view** – see exactly which lines changed (original vs fixed).
+- 🧪 **Python syntax pre-check** – instant local check using Python's `ast` module, fed to the AI as extra context.
+- 🧾 **Error-aware** – paste a traceback or describe the symptom to help the AI find the root cause.
+- 📂 **Paste or upload** – 15+ languages (Python, JavaScript, TypeScript, Java, C/C++, C#, Go, Rust, PHP, Ruby, Kotlin, Swift, SQL, Bash, HTML/CSS).
+- 📥 **Downloads** – fixed code and a full Markdown report.
+- 🎛️ **Review focus** – choose bugs, security, performance, readability.
+- 📄 **Sample button** – load buggy demo code to try the app instantly.
 
-## 1. Requirements
+## Project structure
 
-- Python 3.10 or newer (Python 3.11 or 3.12 recommended)
-- A Google Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
-- Internet connection for Gemini requests
-
-## 2. Run locally
-
-Open a terminal in this folder and create a virtual environment:
-
-**Windows PowerShell**
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-$env:GEMINI_API_KEY="PASTE_YOUR_API_KEY_HERE"
-streamlit run app.py
+```
+.
+├── app.py             # the whole app
+├── requirements.txt   # Python dependencies
+└── README.md
 ```
 
-If `py` is not recognized, try `python -m venv .venv` instead. If PowerShell blocks activation, you can skip activation and install/run with `.venv\Scripts\python.exe -m pip install -r requirements.txt` and `.venv\Scripts\python.exe -m streamlit run app.py`.
+## Run locally
 
-The app should open at `http://localhost:8501`.
-
-### Alternative: use Streamlit Secrets locally
-
-Create `.streamlit/secrets.toml` and add:
-
-```toml
-GEMINI_API_KEY = "PASTE_YOUR_API_KEY_HERE"
-```
-
-Do not upload this file or commit your API key to GitHub. The app also reads `GEMINI_API_KEY` from the environment.
-
-## 3. Push to GitHub using the website UI (no Git commands)
-
-1. Sign in at [GitHub](https://github.com/) and click **+** → **New repository**.
-2. Give it a name such as `resume-ats-analyzer`. Choose **Public** or **Private**, then click **Create repository**.
-3. On the repository page, choose **Add file** → **Upload files**.
-4. Upload `app.py`, `README.md`, and `requirements.txt` from this project folder.
-5. If you created `.streamlit/secrets.toml` locally, **do not upload it**. Do not put your API key in any source file.
-6. Add a commit message such as `Add Resume ATS Analyzer app`, then click **Commit changes**.
-
-The README and requirements filenames must be exactly `README.md` and `requirements.txt` for the steps below.
-
-## 4. Deploy on Streamlit Community Cloud
-
-1. Visit [Streamlit Community Cloud](https://share.streamlit.io/) and sign in with GitHub.
-2. Click **Create app** and select **Yup, I have an app** (wording may vary).
-3. Select your GitHub repository, branch (usually `main`), and main file path `app.py`.
-4. Open **Advanced settings** before deploying. In the **Secrets** field, add this TOML line:
-
-   ```toml
-   GEMINI_API_KEY = "PASTE_YOUR_API_KEY_HERE"
+1. Install Python 3.10+.
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Get a free Gemini API key at <https://aistudio.google.com/apikey>.
+4. Provide the key in **one** of these ways:
+   - Paste it in the app's sidebar (easiest), **or**
+   - Set an environment variable:
+     - macOS/Linux: `export GEMINI_API_KEY="your-key"`
+     - Windows (PowerShell): `$env:GEMINI_API_KEY="your-key"`
+   - **or** create `.streamlit/secrets.toml` containing:
+     ```toml
+     GEMINI_API_KEY = "your-key"
+     ```
+5. Start the app:
+   ```bash
+   streamlit run app.py
    ```
 
-5. Choose Python 3.11 or 3.12 if prompted, then click **Save** / **Deploy**.
-6. Wait for the build to finish. Streamlit will provide a public app URL if your app's sharing settings allow public access.
-7. If deployment fails, open the app's logs and check that the three files are in the repository root and `requirements.txt` contains the dependencies.
+## Configuration
 
-Official guide: [Deploy an app](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app). Secrets guide: [Streamlit secrets management](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/secrets-management).
+| Setting | Where | Default |
+|---|---|---|
+| Gemini API key | Sidebar / `GEMINI_API_KEY` secret / env var | – |
+| Model name | Sidebar | `gemini-2.5-flash` |
+| Max code size | `MAX_CHARS` in `app.py` | 40,000 characters |
 
-## 5. Test checklist
+If Google renames or retires a model, type the new Flash model name into the sidebar – no code change needed.
 
-- Start the app and confirm the page loads.
-- Upload a text-based PDF, DOCX, and TXT file in separate runs.
-- Try a scanned PDF: the app should explain that OCR may be required if no text can be extracted.
-- Paste a job description and verify the report mentions job-relevant keywords.
-- Try without a key: the app should display a clear setup message.
-- Never use a real API key in a public screenshot, commit, or source file.
+## How it works
 
-## Limitations and privacy
+1. Your code is numbered line by line so the AI can cite exact lines.
+2. For Python, a local syntax check runs first.
+3. Gemini is asked (with `application/json` output) for a structured result: summary, quality score, issues, fixed code, and change notes.
+4. The app validates and normalises the JSON, then shows issues, fixed code, diff and a downloadable report.
 
-- Scanned/image-only PDFs need OCR before upload.
-- Resume text is sent to Google Gemini when analysis is requested. Review Google's current API terms and privacy documentation before using real personal data.
-- This demo does not persist resume files, but that does not mean the content is never processed or retained by the AI provider.
-- The checklist is deliberately simple and cannot replicate proprietary ATS ranking logic.
-- For production use, add rate limiting, stronger file validation, privacy disclosures, logging controls, and tests with representative resumes.
+## Deploy on Streamlit Community Cloud
+
+1. Push this repo to GitHub.
+2. Go to <https://share.streamlit.io> and sign in with GitHub.
+3. Click **Create app** → **Deploy a public app from GitHub**.
+4. Choose your repository, branch `main`, and main file path `app.py`.
+5. Open **Advanced settings → Secrets** and paste:
+   ```toml
+   GEMINI_API_KEY = "your-key"
+   ```
+6. Click **Deploy**.
+
+> ⚠️ Never commit your API key to GitHub. Use Secrets.
+
+## Privacy & limitations
+
+- Code you submit is sent to Google's Gemini API. Don't paste secrets, credentials or confidential code you aren't allowed to share.
+- AI can miss bugs or suggest wrong fixes. Always read the changes and run your tests before using them.
+- Very large files should be reviewed in smaller pieces.
+
+## License
+
+MIT – use it, modify it, share it.
